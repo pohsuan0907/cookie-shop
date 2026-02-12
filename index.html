@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>LINE 會員中心</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 24px; }
+    .card { max-width: 520px; border: 1px solid #ddd; border-radius: 12px; padding: 16px; }
+    .row { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+    img { width: 64px; height: 64px; border-radius: 999px; border: 1px solid #eee; }
+    code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
+    .muted { color: #666; font-size: 14px; }
+    .btn { margin-top: 12px; padding: 10px 12px; border: 1px solid #ccc; border-radius: 10px; background: #fff; cursor: pointer; }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h1>LINE 會員中心</h1>
+    <div class="muted" id="status">初始化中...</div>
+
+    <div class="row" style="margin-top:16px;">
+      <img id="avatar" alt="avatar" src="" />
+      <div>
+        <div><b id="name">（尚未登入）</b></div>
+        <div class="muted">userId：<code id="userId">-</code></div>
+      </div>
+    </div>
+
+    <button class="btn" id="logoutBtn" style="display:none;">登出（測試用）</button>
+  </div>
+
+  <script>
+    const LIFF_ID = "2009106215-Yq6fZhFn";
+
+    function setStatus(msg) {
+      document.getElementById("status").textContent = msg;
+    }
+
+    async function main() {
+      try {
+        setStatus("LIFF 初始化中...");
+        await liff.init({ liffId: LIFF_ID });
+
+        const inClient = liff.isInClient();
+        setStatus(inClient ? "已在 LINE App 內開啟 ✅" : "目前不是在 LINE App 內（用瀏覽器開的）");
+
+        // 沒登入就引導登入（在 LINE 內通常會直接完成）
+        if (!liff.isLoggedIn()) {
+          setStatus("尚未登入，跳轉 LINE 登入中...");
+          liff.login(); // 會跳轉，所以下面通常不會立即執行
+          return;
+        }
+
+        // 已登入：抓 profile
+        const profile = await liff.getProfile();
+        document.getElementById("name").textContent = profile.displayName || "(no name)";
+        document.getElementById("userId").textContent = profile.userId || "-";
+        document.getElementById("avatar").src = profile.pictureUrl || "";
+
+        // 顯示登出按鈕（只用來測試）
+        const btn = document.getElementById("logoutBtn");
+        btn.style.display = "inline-block";
+        btn.onclick = () => {
+          liff.logout();
+          location.reload();
+        };
+
+        setStatus("登入成功 🎉（下一步就能把 userId 傳到你的後端建立會員）");
+      } catch (err) {
+        console.error(err);
+        setStatus("發生錯誤： " + (err?.message || err));
+      }
+    }
+
+    main();
+  </script>
+</body>
+</html>
